@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .box-wrapper {
+            width: 800px;
+            height: 200px;
+        }
+        .box {
+            float: left;
+            width: 200px;
+            height: 200px;
+            color: white;
+            line-height: 200px;
+            text-align: center;
+            font-size: 40px;
+        }
+        .box1 {
+            background-color: red;
+        }
+        .box2 {
+            background-color: green;
+        }
+        .box3 {
+            background-color: blue;
+        }
+        .box4 {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="box-wrapper">
+           <div class="box box1" v-if="boxif1">box1</div>
+           <div class="box box2" v-show="boxshow1">box2</div>
+           <div class="box box3" v-if="boxif2">box3</div>
+           <div class="box box4" v-show="boxshow2">box4</div>
+       </div>
+       <div class="btn-group">
+           <button @click="control_box1">box1</button>
+           <button @click="control_box2">box2</button>
+           <button @click="control_box3">box3</button>
+           <button @click="control_box4">box4</button>
+       </div>
+    </div>
+  <script>
+        class Vue {
+            constructor(options) {
+                const { el, data, methods } = options;
+                this.el = document.querySelector(el);
+                this.data = data;
+                this.methods = methods;
+                this.showPool = new Map();
+                this.eventPool = new Map();
+                
+                this.init()
+            }
+
+            init() {
+                this.initData()
+                this.initDom(this.el)
+                this.initView(null, this.showPool)
+                this.initEvent(this.eventPool)
+                console.log(this)
+            }
+
+            initData() {
+                for(let key in this.data) {
+                    Object.defineProperty(this, key, {
+                        get() {
+                            console.log('获取：', this.data[key]);
+                            return this.data[key];
+                        },
+                        set(newVal) {
+                            this.initView(key, this.showPool)
+                            console.log('设置：', newVal);
+                            this.data[key] = newVal;
+                        }
+                    })
+                }
+            }
+
+            initDom(el) {
+                const _childNodes = el.childNodes;
+                if (!_childNodes.length) return;
+                _childNodes.forEach(element => {
+                    if(element.nodeType === 1) {
+                        const vIf = element.getAttribute('v-if');
+                        const vShow = element.getAttribute('v-show');
+                        const vClick = element.getAttribute('@click');
+            
+                        if(vIf) {
+                            this.showPool.set(element, {
+                                type: 'if',
+                                show: this.data[vIf],
+                                data: vIf
+                            })
+                        }
+
+                        if(vShow) {
+                            this.showPool.set(element, {
+                                type: 'show',
+                                show: this.data[vShow],
+                                data: vShow
+                            })
+                        }
+
+                        if(vClick) {
+                            this.eventPool.set(element, this.methods[vClick])
+                        }
+                    }
+                    this.initDom(element) 
+                });
+            }
+            
+
+            initView(data, showPool) {
+                if(data === null) {
+                    for (const [ k, v ] of showPool) {
+                        switch (v.type) {
+                            case 'if':
+                                v.comment = document.createComment('v-if');
+                                !v.show && (k.parentNode.replaceChild(v.comment, k));
+                                break;
+                            case 'show':
+                                !v.show && (k.style.display = 'none');
+                                break
+                            default:
+                                break;
+                        }
+                    }
+                }
+                for(const [k, v] of showPool) {
+                    if(v.data === data) {
+                        switch (v.type) {
+                            case 'if':
+                                v.show ? k.parentNode.replaceChild(v.comment, k) : v.comment.parentNode.replaceChild(k, v.comment)
+                                v.show = !v.show
+                                break;
+                            case 'show':
+                                v.show ? (k.style.display = 'none') : (k.style.display = 'block')
+                                v.show = !v.show
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            initEvent(eventPool) {
+                for(const [k, v] of eventPool) {
+                    k.addEventListener('click', v.bind(this), false)
+                }
+            }
+        }
+
+        new Vue({
+            el: '#app',
+            data: {
+                boxif1: true,
+                boxshow1: true,
+                boxif2: true,
+                boxshow2: true
+            },
+            methods: {
+                control_box1() {
+                    console.log(this)
+                    this.boxif1 = !this.boxif1
+                },
+                control_box2() {
+                    this.boxshow1 = !this.boxshow1
+                },
+                control_box3() {
+                    this.boxif2 = !this.boxif2
+                },
+                control_box4() {
+                    this.boxshow2 = !this.boxshow2
+                }
+            }
+        })
+   </script>
+</body>
+</html>
