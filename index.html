@@ -66,7 +66,6 @@
                 this.initDom(this.el)
                 this.initView(null, this.showPool)
                 this.initEvent(this.eventPool)
-                console.log(this)
             }
 
             initData() {
@@ -97,7 +96,7 @@
                         if(vIf) {
                             this.showPool.set(element, {
                                 type: 'if',
-                                show: this.data[vIf],
+                                show: this[vIf],
                                 data: vIf
                             })
                         }
@@ -105,7 +104,7 @@
                         if(vShow) {
                             this.showPool.set(element, {
                                 type: 'show',
-                                show: this.data[vShow],
+                                show: this[vShow],
                                 data: vShow
                             })
                         }
